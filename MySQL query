@@ -1,0 +1,99 @@
+-- Show sale data table & order by date
+
+select * 
+from sale16
+order by 1, 2
+
+-- union with Sale 2017
+
+select * 
+from sale16
+union (
+		select *
+		from sale17
+		)
+order by 1 desc
+
+-- Looking at number of order by productkey
+
+select sale.ProductKey, sale.TerritoryKey, SUM(sale.OrderQuantity) as order_number
+from (
+	select * from sale_16
+	union 
+	select * from sale_17) as sale
+group by sale.ProductKey, sale.TerritoryKey
+-- Join return_table to get return quantity
+SELECT sa.OrderDate, sa.StockDate, sa.OrderQuantity, sa.ProductKey, sa.TerritoryKey, re.ReturnQuantity, re.ReturnDate
+FROM sale16 sa
+JOIN [return] re ON sa.ProductKey = re.ProductKey AND sa.TerritoryKey = re.TerritoryKey;
+
+-- Calculate return rate by productkey
+with product_summary (ProductKey, TerritoryKey, order_number, return_number, return_qty) as (
+  sellect
+    order_groupby.ProductKey,
+    order_groupby.TerritoryKey,
+    order_groupby.order_number,
+    coalesce(r.return_number, 0) AS return_number,
+    coalesce(r.return_qty, 0) AS return_qty
+  from (
+    select
+      sale.ProductKey,
+      sale.TerritoryKey,
+      SUM(sale.OrderQuantity) AS order_number
+    from (
+      select * from sale16
+      union all
+      select * from sale17
+    ) as sale
+    group by sale.ProductKey, sale.TerritoryKey
+  ) as order_groupby
+  left join (
+    select
+      re.ProductKey,
+      re.TerritoryKey,
+      sum(re.ReturnQuantity) AS return_number,
+      sum(re.ReturnQuantity) AS return_qty
+    from [return] re
+    group by re.ProductKey, re.TerritoryKey
+  ) as r on order_groupby.ProductKey = r.ProductKey AND order_groupby.TerritoryKey = r.TerritoryKey
+)
+
+select *,  (CAST(return_qty AS decimal) / CAST(order_number AS decimal)) * 100 as return_rate -- calculate the return rate
+from product_summary;
+
+-- create view
+
+create view product_summary as 
+
+with product_summary (ProductKey, TerritoryKey, order_number, return_number, return_qty) as (
+  sellect
+    order_groupby.ProductKey,
+    order_groupby.TerritoryKey,
+    order_groupby.order_number,
+    coalesce(r.return_number, 0) AS return_number,
+    coalesce(r.return_qty, 0) AS return_qty
+  from (
+    select
+      sale.ProductKey,
+      sale.TerritoryKey,
+      SUM(sale.OrderQuantity) AS order_number
+    from (
+      select * from sale16
+      union all
+      select * from sale17
+    ) as sale
+    group by sale.ProductKey, sale.TerritoryKey
+  ) as order_groupby
+  left join (
+    select
+      re.ProductKey,
+      re.TerritoryKey,
+      sum(re.ReturnQuantity) AS return_number,
+      sum(re.ReturnQuantity) AS return_qty
+    from [return] re
+    group by re.ProductKey, re.TerritoryKey
+  ) as r on order_groupby.ProductKey = r.ProductKey AND order_groupby.TerritoryKey = r.TerritoryKey
+)
+
+select *,  (CAST(return_qty AS decimal) / CAST(order_number AS decimal)) * 100 as return_rate -- calculate the return rate
+from product_summary;
