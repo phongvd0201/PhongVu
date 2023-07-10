@@ -1,3 +1,6 @@
+-- Description: Dataset include 4 files: sale 2016, sale 2017, Returns, and Product_description
+-- Request: Import dataset in to SQL; calculate return rate , a creat a view of product summary.
+-- Show sale data table & order by date
 -- Show sale data table & order by date
 
 select * 
@@ -18,9 +21,9 @@ order by 1 desc
 
 select sale.ProductKey, sale.TerritoryKey, SUM(sale.OrderQuantity) as order_number
 from (
-	select * from sale_16
+	select * from sale16
 	union 
-	select * from sale_17) as sale
+	select * from sale17) as sale
 group by sale.ProductKey, sale.TerritoryKey
 -- Join return_table to get return quantity
 SELECT sa.OrderDate, sa.StockDate, sa.OrderQuantity, sa.ProductKey, sa.TerritoryKey, re.ReturnQuantity, re.ReturnDate
@@ -29,7 +32,7 @@ JOIN [return] re ON sa.ProductKey = re.ProductKey AND sa.TerritoryKey = re.Terri
 
 -- Calculate return rate by productkey
 with product_summary (ProductKey, TerritoryKey, order_number, return_number, return_qty) as (
-  sellect
+  select
     order_groupby.ProductKey,
     order_groupby.TerritoryKey,
     order_groupby.order_number,
@@ -58,15 +61,16 @@ with product_summary (ProductKey, TerritoryKey, order_number, return_number, ret
   ) as r on order_groupby.ProductKey = r.ProductKey AND order_groupby.TerritoryKey = r.TerritoryKey
 )
 
-select *,  (CAST(return_qty AS decimal) / CAST(order_number AS decimal)) * 100 as return_rate -- calculate the return rate
-from product_summary;
+select *, (CAST(return_qty AS decimal) / CAST(order_number AS decimal)) * 100 as return_rate -- calculate the return rate
+	from [product_summary] ps
+	left join [pro] p
+		on ps.ProductKey = p.ProductKey
+	order by 4 desc
 
 -- create view
-
 create view product_summary as 
-
 with product_summary (ProductKey, TerritoryKey, order_number, return_number, return_qty) as (
-  sellect
+  select
     order_groupby.ProductKey,
     order_groupby.TerritoryKey,
     order_groupby.order_number,
@@ -95,5 +99,14 @@ with product_summary (ProductKey, TerritoryKey, order_number, return_number, ret
   ) as r on order_groupby.ProductKey = r.ProductKey AND order_groupby.TerritoryKey = r.TerritoryKey
 )
 
-select *,  (CAST(return_qty AS decimal) / CAST(order_number AS decimal)) * 100 as return_rate -- calculate the return rate
-from product_summary;
+select *, (CAST(return_qty AS decimal) / CAST(order_number AS decimal)) * 100 as return_rate -- calculate the return rate
+	from [product_summary] ps
+	left join [pro] p
+		on ps.ProductKey = p.ProductKey
+	order by 4 desc
+
+select *, (CAST(return_qty AS decimal) / CAST(order_number AS decimal)) * 100 as return_rate -- calculate the return rate
+	from [product_summary] ps
+	left join [pro] p
+		on ps.ProductKey = p.ProductKey
+	order by 4 desc
