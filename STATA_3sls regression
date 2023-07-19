@@ -1,0 +1,65 @@
+#To find out relationship between variables
+#Data from SEMrush and scraping from Agoda and website 
+cover 20 hotel website and 11 variables in 6 years from 2017 to 2022
+
+***********
+import excel "D:\Nghiên cứu\VR_project\dataset.xlsx", sheet("Sheet1") firstrow
+
+encode Hotel, gen(hotel_name)
+encode Date, gen(time)
+
+rename OrganicKeywords media_eff
+rename OrganicTraffic click_num
+rename Backlinks blink_num
+rename Refdomains ref_num
+
+gen country_code = "UAE" if Hotel== "Atlantis Dubai Hotel"| Hotel== "Clubmanhindra"
+replace country_code= "Aus" if Hotel== "Pullman Brisbane King George Square Hotel"| Hotel== "Hyatt"
+replace country_code= "Mex" if Hotel== "Grand Oasis Hotel"| Hotel== "Casatortugas"
+replace country_code= "South" if Hotel== "Le Franschhoek Hotel & Spa"| Hotel== "Avondrood"
+replace country_code= "Cro" if Hotel== "Valamar Dubrovnik President Hotel"| Hotel== "Hilton"
+replace country_code= "Ind" if Hotel== "Vythiri Resort of Wyanad"| Hotel== "Vythiri"
+replace country_code= "Fr" if Hotel== "Bora Bora Pearl Beach Resort & Spa"| Hotel== "Royalborabora"
+replace country_code= "Thai" if Hotel== "Cape Dara"| Hotel== "Marriot"
+encode country_code, gen(country)
+
+rename Num_of_reviewer reviewers
+label var reviewers "Num_of_reviewers"
+rename Num_of_staff staffs
+label var staffs "Number of staffs"
+rename Num_of_room rooms
+label var rooms "Number of rooms"
+rename Dis_to_capital dis_cap
+label var dis_cap "Distance to capital"
+rename Dis_to_the_nearest_airport dis_airport
+label var dis_airport "Distance to the nearest airport"
+rename Average_price aver_price
+label var aver_price "Average price"
+rename Type ownership
+label var ownership "ownership=1 if private; ownership=0 if public"
+
+replace blink_num= blink/1000000
+label var blink_num "Number of back links (unit: millions)"
+replace ref_num = ref_num /1000
+label var ref_num "Number of reference domains (unit:thousand)"
+
+***Data description, comparison by VR***
+
+global varlist "(VR click_num blink_num ref_num media_eff Rate reviewers staffs aver_price Revenue ownership rooms dis_cap dis_airport)"
+global indepvar "(click_num blink_num ref_num media_eff Rate reviewers staffs aver_price Revenue ownership rooms dis_cap dis_airport)"
+
+sum $varlist
+by VR, sort: sum $indepvar
+estpost ttest $indepvar , by(VR)
+esttab ., wide
+
+****Regression****
+
+xtset hotel_name time
+gen revenue_sh= Revenue/staffs
+
+global model_1 "(Revenue click_num aver_price staffs Rate)"
+global model_2 "(click_num VR ref_num reviewers)"
+global model_3 "(VR revenue_sh ownership dis_airport)"
+
+reg3 $model_1 $model_2 $model_3
