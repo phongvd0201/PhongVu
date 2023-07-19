@@ -1,0 +1,84 @@
+***Survey data conducted by researchers
+include 393 valid response*** 
+I apply regression and SEM to find out the relationship between variables
+
+******
+import excel "E:\data\data 3-21-3.xlsx", sheet("Form Responses 1") firstrow
+
+**** statistical description *****
+sum AQ1 AQ2 AQ3 AQ4 AQ5 AQ6 AT1 AT2 AT3 AT4 CR1 CR2 CR3 EP1 EP2 EP3 EP4 EP5 MPI1 MPI2 MPI3 PI1 PI2 PI3
+
+*** Cronbach alpha
+alpha AQ1 AQ2 AQ3 AQ4 AQ5 AQ6, item
+alpha AT1 AT2 AT3 AT4 , item
+alpha CR1 CR2 CR3 , item
+alpha EP1 EP2 EP3 EP4 EP5 , item
+alpha MPI1 MPI2 MPI3, item
+alpha PI1 PI2 PI3 , item
+
+**** EFA
+
+factor AQ1 AQ2 AQ3 AQ4 AQ5 AQ6 AT1 AT2 AT3 AT4 CR1 CR2 CR3 EP1 EP2 EP3 EP4 EP5, pcf mineigen(1)
+factor AQ1 AQ2 AQ3 AQ4 AQ5 AQ6 AT1 AT2 AT3 AT4 EP1 EP2 EP3 EP4 EP5, pcf mineigen(1)
+rotate, kaiser blanks(0.5)
+factor PI1 PI2 PI3 , pcf mineigen(1)
+rotate, kaiser blanks(0.5)
+factor MPI1 MPI2 MPI3 , pcf mineigen(1)
+rotate, kaiser blanks(0.5)
+
+***** CFA
+sem (AQ -> AQ1, ) (AQ -> AQ2, ) (AQ -> AQ3, ) (AQ -> AQ4, ) (AQ -> AQ5, ) (AQ -> AQ6, ) (AT -> AT1, ) (AT -> AT2, ) (AT -> AT3, ) (EP  -> EP1, ) (EP -> EP2, ) (EP -> EP3, ) (EP -> EP4, ) (EP -> EP5, ) (MPI -> MPI1, ) (MPI -> MPI2, ) (MPI -> MPI3, ) (PI -> PI1, ) (PI ->  PI2, ) (PI -> PI3, ), covstruct(_lexogenous, diagonal) latent(AQ AT EP MPI PI ) cov( AQ*PI AT*AQ AT*PI EP*AQ EP*AT EP*MPI MPI*AQ MPI* AT e.AQ2*e.AQ3 e.AQ6*e.AQ1 PI*EP PI*MPI) nocapslatent
+estat mindices
+estat gof, stats(all)
+
+***** AFTER using cronbach's alpha, EFA, CFA can conclude that scale and variables are good and could be trusted
+**** Try with regression for understanding the initial relationship
+
+egen float AQm = rowmean(AQ1 AQ2 AQ3 AQ4 AQ5 AQ6)
+egen float ATm = rowmean(AT1 AT2 AT3 AT4)
+egen float CRm = rowmean(CR1 CR2 CR3)
+egen float EPm = rowmean(EP1 EP2 EP3 EP4 EP5)
+egen float MPIm = rowmean(MPI1 MPI2 MPI3)
+egen float PIm = rowmean(PI1 PI2 PI3)
+regress PIm AQm ATm EPm, beta
+vif
+regress PIm AQm ATm EPm, beta
+hettest
+regress PIm AQm ATm EPm, beta
+estat imtest, white
+regress PIm AQm ATm EPm, beta
+estat ovtest
+regress PIm AQm ATm EPm, beta
+predict e, residuals
+sktest e
+
+****** Testing moderating effect
+
+gen float XAQm = MPIm*AQm
+gen float XATm = MPIm* ATm
+gen float XCRm = CRm* MPIm
+gen float XEPM = EPm* MPIm
+regress PIm AQm ATm EPm MPIm XEPM , beta
+regress MPIm AQm ATm EPm, beta
+regress PIm AQm ATm EPm XEPM , beta
+regress PIm AQm ATm EPm XEPM XCRm XATm XAQm , beta
+regress PIm AQm ATm EPm XEPM XATm XAQm , beta
+regress PIm AQm ATm EPm XAQm , beta
+regress MPIm AQm ATm EPm, beta
+vif
+regress MPIm AQm ATm EPm, beta
+hettest
+corr MPIm PIm
+
+egen float AQm1 = rowmean( AQ1 AQ2 AQ3)
+regress PIm AQm1 ATm EPm CRm , beta
+
+sum AQm ATm CRm EPm MPIm PIm
+
+***** SEM
+
+sem (AQ -> AQ1, ) (AQ -> AQ2, ) (AQ -> AQ3, ) (AQ -> AQ4, ) (AQ -> AQ5, ) (AQ -> AQ6, ) (AQ -> MPI, ) (AQ -> PI, ) (EP -> AQ, ) (EP ->EP1, ) (EP -> EP2, ) (EP -> EP3, ) (EP -> EP4, ) (EP -> EP5, ) (EP -> AT, ) (EP -> MPI, ) (EP -> PI, ) (AT -> AT1, ) (AT -> AT2, ) (AT -> AT3, ) (AT -> MPI, ) (AT -> PI, ) (MPI -> MPI1, ) (MPI -> MPI2, ) (MPI -> MPI3, ) (MPI -> PI, ) (PI -> PI1, ) (PI -> PI2, ) (PI ->PI3, ), latent(AQ EP AT MPI PI ) cov( e.AQ2*e.AQ3 e.AQ6*e.AQ1) nocapslatent
+estat gof, stats(all)
+
+estat mindices
+estat gof, stats(all)
