@@ -1,8 +1,5 @@
-#Objectives: to find out groups of customers with similar behaviors to optimize business performance
-#Dataset description: contains the basic information (ID, age, gender, income, spending score) about the customers of a mall. 
-#Spending Score is something you assign to the customer based on your defined parameters like customer behavior and purchasing data.
-
 from typing import Union, Any
+
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -11,7 +8,8 @@ from pandas import DataFrame
 from sklearn import datasets
 from sklearn.cluster import KMeans
 
-#Display function
+
+# Display function 2D
 def kmeans_display(X, label):
     K = np.amax(label) + 1
     clusters = [X[label == i] for i in range(K)]
@@ -20,25 +18,53 @@ def kmeans_display(X, label):
     markers = ['b^', 'go', 'rs', 'yo', 'c^']
     colors = ['blue', 'green', 'red', 'yellow', 'cyan']
 
-    # Plot each cluster separately if it has data points in 'X1'
+    # Plot each cluster separately if it has data points in dataframe
     for i, cluster in enumerate(clusters):
         if len(cluster) > 0:
-            plt.plot(cluster[:, 0], cluster[:, 1], markers[i], markersize=4, alpha=.8, label=f'Cluster {i}', color=colors[i])
+            plt.plot(cluster[:, 0], cluster[:, 1], markers[i], markersize=4, alpha=.8, label=f'Cluster {i}',
+                     color=colors[i])
 
     plt.axis('equal')
     plt.legend()
     plt.plot()
     plt.show()
+
+
+# Display 3D dimensions
+def kmeans_display_3d(X, label):
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+
+    K = np.amax(label) + 1
+    clusters = [X[label == i] for i in range(K)]
+    markers = ['o', 's', 'D', 'v', '^', 'p']
+    colors = ['blue', 'green', 'red', 'yellow', 'cyan', 'magenta']
+
+    for i, cluster in enumerate(clusters):
+        if len(cluster) > 0:
+            ax.scatter(cluster[:, 0], cluster[:, 1], cluster[:, 2], marker=markers[i], s=40, alpha=0.8,
+                       label=f'Cluster {i}', c=colors[i])
+
+    ax.set_xlabel('Feature 1')
+    ax.set_ylabel('Feature 2')
+    ax.set_zlabel('Feature 3')
+    ax.legend()
+    plt.show()
+
+
 # Import data
 df = pd.read_csv("E:\Mall_Customers.csv")
+
+# Avoid hiding columns or row
+pd.set_option('display.max_columns', 20)
+pd.set_option('display.max_rows', 200)
 
 # statistic description
 print(df.head(5))
 print(df.info())
 print(df.describe())
 print(df.isnull().sum())
-
-# distribution diagram
+# Histogram
 plt.figure(1, figsize=(15, 6))
 n = 0
 for x in ['Age', 'Annual Income (k$)', 'Spending Score (1-100)']:
@@ -70,14 +96,17 @@ plt.plot(np.arange(1, 15), inertia, '-', alpha=0.5)
 plt.xlabel('Number of Clusters'), plt.ylabel('Inertia')
 plt.show()
 
-#k value = 4
-# Display functions
+#k value could be 4 or 5. So we should test for both
 
+#k value = 4
 kmeans = KMeans(n_clusters=4, random_state=0).fit(X1)
 print('Centers found by scikit-learn:')
 print(kmeans.cluster_centers_)
 pred_label = kmeans.predict(X1)
 kmeans_display(X1, pred_label)
+df['Cluster'] = pred_label
+sorted_df = df.sort_values(by='Cluster', ascending=False)
+print(sorted_df)
 
 #K value=5
 kmeans = KMeans(n_clusters=5, random_state=0).fit(X1)
@@ -85,6 +114,9 @@ print('Centers found by scikit-learn:')
 print(kmeans.cluster_centers_)
 pred_label = kmeans.predict(X1)
 kmeans_display(X1, pred_label)
+df['Cluster'] = pred_label
+sorted_df = df.sort_values(by='Cluster', ascending=False)
+print(sorted_df)
 
 # 2D clustering based on Annual income and Spending score
 sns.scatterplot(data=df, x='Annual Income (k$)', y='Spending Score (1-100)')
@@ -103,10 +135,41 @@ plt.plot(np.arange(1, 15), inertia, 'o')
 plt.plot(np.arange(1, 15), inertia, '-', alpha=0.5)
 plt.xlabel('Number of Clusters'), plt.ylabel('Inertia')
 plt.show()
-
+#We can guess that k value could be 5
 #K value=5
 kmeans = KMeans(n_clusters=5, random_state=0).fit(X2)
 print('Centers found by scikit-learn:')
 print(kmeans.cluster_centers_)
 pred_label = kmeans.predict(X2)
 kmeans_display(X2, pred_label)
+df['Cluster'] = pred_label
+sorted_df = df.sort_values(by='Cluster', ascending=False)
+print(sorted_df)
+# 3D kmeans clustering
+# decide kvalue
+X3 = df[['Age', 'Annual Income (k$)', 'Spending Score (1-100)']].values
+inertia = []
+
+for n in range(1, 11):  # Corrected range to go from 1 to 10
+    algorithm = KMeans(n_clusters=n, init='k-means++', n_init=10, max_iter=300, tol=0.0001, random_state=111,
+                       algorithm='elkan')
+    algorithm.fit(X3)
+    inertia.append(algorithm.inertia_)
+
+plt.figure(1, figsize=(15, 6))
+plt.plot(np.arange(1, 11), inertia, 'o')
+plt.plot(np.arange(1, 11), inertia, '-', alpha=0.5)
+plt.xlabel('Number of Clusters')
+plt.ylabel('Inertia')
+plt.show()
+
+# 3D
+
+kmeans = KMeans(n_clusters=6, random_state=0).fit(X3)
+print('Centers found by scikit-learn:')
+print(kmeans.cluster_centers_)
+pred_label = kmeans.predict(X3)
+kmeans_display_3d(X3, pred_label)
+df['Cluster'] = pred_label
+sorted_df = df.sort_values(by='Cluster', ascending=False)
+print(sorted_df)
