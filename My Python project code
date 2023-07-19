@@ -1,0 +1,112 @@
+#Objectives: to find out the 
+#Dataset description: contains the basic information (ID, age, gender, income, spending score) about the customers of a mall. 
+#Spending Score is something you assign to the customer based on your defined parameters like customer behavior and purchasing data.
+
+from typing import Union, Any
+import pandas as pd
+import numpy as np
+import seaborn as sns
+from matplotlib import pyplot as plt
+from pandas import DataFrame
+from sklearn import datasets
+from sklearn.cluster import KMeans
+
+#Display function
+def kmeans_display(X, label):
+    K = np.amax(label) + 1
+    clusters = [X[label == i] for i in range(K)]
+
+    # Define a list of markers and colors for plotting
+    markers = ['b^', 'go', 'rs', 'yo', 'c^']
+    colors = ['blue', 'green', 'red', 'yellow', 'cyan']
+
+    # Plot each cluster separately if it has data points in 'X1'
+    for i, cluster in enumerate(clusters):
+        if len(cluster) > 0:
+            plt.plot(cluster[:, 0], cluster[:, 1], markers[i], markersize=4, alpha=.8, label=f'Cluster {i}', color=colors[i])
+
+    plt.axis('equal')
+    plt.legend()
+    plt.plot()
+    plt.show()
+# Import data
+df = pd.read_csv("E:\Mall_Customers.csv")
+
+# statistic description
+print(df.head(5))
+print(df.info())
+print(df.describe())
+print(df.isnull().sum())
+
+# distribution diagram
+plt.figure(1, figsize=(15, 6))
+n = 0
+for x in ['Age', 'Annual Income (k$)', 'Spending Score (1-100)']:
+    n += 1
+    plt.subplot(1, 3, n)
+    plt.subplots_adjust(hspace=0.5, wspace=0.5)
+    plt.hist(df[x], bins=15)
+    plt.title('Distplot of {}'.format(x))
+plt.show()
+
+# pairplot
+sns.pairplot(df, vars=['Spending Score (1-100)', 'Annual Income (k$)', 'Age'], hue="Gender")
+plt.show()
+
+# 2D clustering based on Age and Spending score
+sns.scatterplot(data=df, x='Age', y='Spending Score (1-100)')
+plt.show()
+# decide K value
+X1 = df[['Age', 'Spending Score (1-100)']].iloc[:, :].values
+inertia = []
+for n in range(1, 15):
+    algorithm = (KMeans(n_clusters=n, init='k-means++', n_init=10, max_iter=300,
+                        tol=0.0001, random_state=111, algorithm='elkan'))
+    algorithm.fit(X1)
+    inertia.append(algorithm.inertia_)
+plt.figure(1, figsize=(15, 6))
+plt.plot(np.arange(1, 15), inertia, 'o')
+plt.plot(np.arange(1, 15), inertia, '-', alpha=0.5)
+plt.xlabel('Number of Clusters'), plt.ylabel('Inertia')
+plt.show()
+
+#k value = 4
+# Display functions
+
+kmeans = KMeans(n_clusters=4, random_state=0).fit(X1)
+print('Centers found by scikit-learn:')
+print(kmeans.cluster_centers_)
+pred_label = kmeans.predict(X1)
+kmeans_display(X1, pred_label)
+
+#K value=5
+kmeans = KMeans(n_clusters=5, random_state=0).fit(X1)
+print('Centers found by scikit-learn:')
+print(kmeans.cluster_centers_)
+pred_label = kmeans.predict(X1)
+kmeans_display(X1, pred_label)
+
+# 2D clustering based on Annual income and Spending score
+sns.scatterplot(data=df, x='Annual Income (k$)', y='Spending Score (1-100)')
+plt.show()
+
+# decide K value
+X2 = df[['Annual Income (k$)', 'Spending Score (1-100)']].iloc[:, :].values
+inertia = []
+for n in range(1, 15):
+    algorithm = (KMeans(n_clusters=n, init='k-means++', n_init=10, max_iter=300,
+                        tol=0.0001, random_state=111, algorithm='elkan'))
+    algorithm.fit(X2)
+    inertia.append(algorithm.inertia_)
+plt.figure(1, figsize=(15, 6))
+plt.plot(np.arange(1, 15), inertia, 'o')
+plt.plot(np.arange(1, 15), inertia, '-', alpha=0.5)
+plt.xlabel('Number of Clusters'), plt.ylabel('Inertia')
+plt.show()
+
+#K value=5
+kmeans = KMeans(n_clusters=5, random_state=0).fit(X2)
+print('Centers found by scikit-learn:')
+print(kmeans.cluster_centers_)
+pred_label = kmeans.predict(X2)
+kmeans_display(X2, pred_label)
