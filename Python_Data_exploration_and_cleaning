@@ -1,0 +1,128 @@
+#Let's explore and clean the dataset of titanic passengers
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+from matplotlib import pyplot as plt
+from pandas import DataFrame
+
+df1 = pd.read_csv("E:/train.csv")
+
+#data explorations
+print(df1.shape)
+print(df1.dtypes)
+print(df1.head(5))
+print(df1.describe())
+cate = df1.dtypes[df1.dtypes == "object"].index
+print(df1[cate].describe())
+#the count of age(712) is less than the total row count of hte data set(889). This indicates missing data of 'Age'
+#Have a look at histogram
+plt.figure(1, figsize=(15, 6))
+n = 0
+for x in ['Age', 'Fare']:
+    n += 1
+    plt.subplot(1, 3, n)
+    plt.subplots_adjust(hspace=0.5, wspace=0.5)
+    plt.hist(df1[x], bins=15)
+    plt.title('Distplot of {}'.format(x))
+plt.show()
+# After look at the histogram we can guess there is outlier with Fare
+# boxplot of Fare
+df1["Fare"].plot(kind="box",
+                           figsize=(9,9))
+plt.show()
+
+#The dataset have the missing data for Age and outliers for Fare. We can clean it later
+
+#remove unusefull variables
+#look closer to name, Passenger ID, cabin and Ticket
+
+print(df1["Name"].describe())
+print(df1["Name"].head(15))
+print(df1["Ticket"].describe())
+print(df1["Ticket"].head(15))
+print(df1["PassengerId"].describe())
+print(df1["PassengerId"].head(15))
+print(df1["Cabin"].describe())
+print(df1["Cabin"].head(15))
+#We can see the Passenger ID and Ticket Numbe can not be used for further prediction.
+#delete PassengerId and Ticket
+del df1["PassengerId"]
+del df1["Ticket"]
+
+#Tranform variable
+#We can tranform pclass, survival, and cabin for a better understand
+#Tranform survival
+n_survived = pd.Categorical(df1["Survived"])
+n_survived = n_survived.rename_categories(["Died","Survived"])
+print(n_survived.describe())
+
+#Tranform pclass
+n_Pclass = pd.Categorical(df1["Pclass"],
+                           ordered=True)
+n_Pclass = n_Pclass.rename_categories(["Class01","Class02","Class03"])
+print(n_Pclass.describe())
+df1["Pclass"] = n_Pclass
+#Tranform cabin
+
+df1["Cabin"].unique() #check for unique
+char_cab = df1["Cabin"].astype(str) # Convert data to str
+n_Cabin = np.array([i[0] for i in char_cab]) # Take first letter
+
+n_Cabin = pd.Categorical(n_Cabin)
+
+n_Cabin .describe()
+df1["Cabin"] = n_Cabin
+
+#Clean NA and Outliers
+
+missing_value_age=df1[pd.isnull(df1['Age'])]
+print(missing_value_age)
+
+#age have 177 missing value
+#Age of a person could not be 0 so we should use replace with median or mean
+#replace with medium value of 28
+nage = np.where(df1["Age"].isnull(),
+                       28,
+                       df1["Age"])
+
+df1["Age"] = nage
+print(df1["Age"].describe())
+
+#Look again at new histogram
+plt.figure(1, figsize=(15, 6))
+n = 0
+for x in ['Age']:
+    n += 1
+    plt.subplot(1, 3, n)
+    plt.subplots_adjust(hspace=0.5, wspace=0.5)
+    plt.hist(df1[x], bins=15)
+    plt.title('Distplot of {}'.format(x))
+plt.show()
+
+#Look at outliers, because there is some passenger that pay more than other (even double) so we should look at the fare after softing
+
+sorted_df = df1.sort_values(by='Fare',ascending=False)
+pd.set_option('display.max_columns', 20) #To avoid hiding the column
+print(sorted_df)
+#There are 3 passengers that have to pay the same maximum of price so we can keep the outliers
+
+#Looking at the dataset we can see that siblings and Parch could be merge as family.
+#Creat new variables
+df1["Family"] = df1["SibSp"] + df1["Parch"]
+sorted_df = df1.sort_values(by='Family',ascending=False)
+print(sorted_df)
+print(df1["Family"].describe())
+#histogram of Family
+plt.figure(1, figsize=(15, 6))
+n = 0
+for x in ['Family']:
+    n += 1
+    plt.subplot(1, 3, n)
+    plt.subplots_adjust(hspace=0.5, wspace=0.5)
+    plt.hist(df1[x], bins=15)
+    plt.title('Distplot of {}'.format(x))
+plt.show()
+
+
+
