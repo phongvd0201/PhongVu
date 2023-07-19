@@ -1,4 +1,4 @@
-#Objectives: to find out the 
+#Objectives: to find out groups of customers with similar behaviors to optimize business performance
 #Dataset description: contains the basic information (ID, age, gender, income, spending score) about the customers of a mall. 
 #Spending Score is something you assign to the customer based on your defined parameters like customer behavior and purchasing data.
 
