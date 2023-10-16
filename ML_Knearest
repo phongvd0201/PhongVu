@@ -1,0 +1,32 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import neighbors, datasets
+import time
+
+df = pd.read_csv("E:/Iris.csv")
+
+from sklearn.model_selection import train_test_split
+
+df_X = df.drop("Species", axis=1)
+df_y = df["Species"]
+
+from sklearn.model_selection import train_test_split
+xtrain, xtest, ytrain, ytest = train_test_split(
+     df_X, df_y, test_size=100)
+print("train size=", len(df_X))
+
+start_time = time.time()
+clf = neighbors.KNeighborsClassifier(n_neighbors=4, p=2, weights = 'distance')
+clf.fit(xtrain, ytrain)
+ypred = clf.predict(xtest)
+end_time = time.time()
+
+# Evaluate
+print("Print results for 20 test data points:")
+print("Predicted labels: ", ypred[20:40])
+print("Ground truth    : ", ytest[20:40])
+from sklearn.metrics import accuracy_score
+print("Accuracy: %.2f %%" %(100*accuracy_score(ytest, ypred)))
+print("running iris dataset time %.5f" %(end_time - start_time))
+
+
